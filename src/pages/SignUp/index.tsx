@@ -13,6 +13,7 @@ import { Form } from '@unform/mobile';
 import { FormHandles } from '@unform/core';
 import * as Yup from 'yup';
 import validationErrors from '../../utils/getValidationErrors';
+import api from '../../services/api';
 import Icon from 'react-native-vector-icons/Feather';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
@@ -20,9 +21,9 @@ import logoImg from '../../assets/logo.png';
 import { Container, Title, BackToSignIn, BackToSignInText } from './styles';
 
 interface SignUpFormData {
-  nome: string;
-  password: string;
+  name: string;
   email: string;
+  password: string;
 }
 
 const SignUp: React.FC = () => {
@@ -31,34 +32,43 @@ const SignUp: React.FC = () => {
   const inputPasswordRef = useRef<TextInput>(null);
   const formRef = useRef<FormHandles>({} as FormHandles);
 
-  const handleSignUp = useCallback(async (data: SignUpFormData) => {
-    try {
-      formRef.current.setErrors({});
-      const schema = Yup.object().shape({
-        name: Yup.string().required('nome obrigatório'),
-        email: Yup.string()
-          .required('E-mail obrigatório')
-          .email('Digite um e-mail válido'),
-        password: Yup.string().min(6, 'No minimo 6 dígitos'),
-      });
+  const handleSignUp = useCallback(
+    async (data: SignUpFormData) => {
+      try {
+        formRef.current.setErrors({});
+        const schema = Yup.object().shape({
+          name: Yup.string().required('nome obrigatório'),
+          email: Yup.string()
+            .required('E-mail obrigatório')
+            .email('Digite um e-mail válido'),
+          password: Yup.string().min(6, 'No minimo 6 dígitos'),
+        });
 
-      await schema.validate(data, { abortEarly: false });
+        await schema.validate(data, { abortEarly: false });
 
-      // await api.post('/users', data);
+        await api.post('/users', data);
 
-      // history.push('/');
-    } catch (err) {
-      if (err instanceof Yup.ValidationError) {
-        let newErrors = validationErrors(err);
-        formRef.current.setErrors(newErrors);
-        return;
+        Alert.alert(
+          'Cadastro realizado com sucesso!',
+          'Você ja pode fazer o login na aplicação',
+        );
+
+        navigation.goBack();
+      } catch (err) {
+        if (err instanceof Yup.ValidationError) {
+          let newErrors = validationErrors(err);
+          formRef.current.setErrors(newErrors);
+          return;
+        }
+
+        Alert.alert(
+          'Erro no Cadastro',
+          'Ocorreu um erro ao fazer Cadastro,tente novamente',
+        );
       }
-      Alert.alert(
-        'Erro no Cadastro',
-        'Ocorreu um erro ao fazer Cadastro,tente novamente',
-      );
-    }
-  }, []);
+    },
+    [navigation],
+  );
 
   return (
     <>
